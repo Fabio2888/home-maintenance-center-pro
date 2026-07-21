@@ -1,5 +1,5 @@
 """
-Base entity for Home Maintenance Center Pro.
+Base entities for Home Maintenance Center Pro.
 """
 
 from __future__ import annotations
@@ -22,7 +22,7 @@ from .models.maintenance_item import MaintenanceItem
 class HomeMaintenanceEntity(
     CoordinatorEntity[HomeMaintenanceCoordinator]
 ):
-    """Base entity for Home Maintenance Center Pro entities."""
+    """Base entity for a maintenance item."""
 
     _attr_has_entity_name = True
     _attr_should_poll = False
@@ -38,8 +38,7 @@ class HomeMaintenanceEntity(
 
         self.item = item
 
-        # This value will be overridden by each platform
-        # (sensor, binary_sensor, button, etc.)
+        # Overridden by each platform
         self._entity_suffix = "entity"
 
         self._attr_suggested_object_id = (
@@ -58,7 +57,7 @@ class HomeMaintenanceEntity(
 
     @property
     def name(self) -> str:
-        """Return the device name."""
+        """Return the maintenance item name."""
 
         return self.item.name
 
@@ -66,7 +65,10 @@ class HomeMaintenanceEntity(
     def available(self) -> bool:
         """Return entity availability."""
 
-        return super().available and self.item.enabled
+        return (
+            super().available
+            and self.item.enabled
+        )
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -86,7 +88,7 @@ class HomeMaintenanceEntity(
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        """Return common entity attributes."""
+        """Return common maintenance attributes."""
 
         return {
             "item_id": self.item.item_id,
@@ -106,4 +108,67 @@ class HomeMaintenanceEntity(
             "purchase_url": self.item.purchase_url,
             "notify": self.item.notify,
             "tags": self.item.tags,
+        }
+
+
+class HomeMaintenanceSummaryEntity(
+    CoordinatorEntity[HomeMaintenanceCoordinator]
+):
+    """Base entity for integration summary sensors."""
+
+    _attr_has_entity_name = True
+    _attr_should_poll = False
+
+    def __init__(
+        self,
+        coordinator: HomeMaintenanceCoordinator,
+    ) -> None:
+        """Initialize the summary entity."""
+
+        super().__init__(coordinator)
+
+        # Overridden by every summary sensor
+        self._entity_suffix = "summary"
+
+    @property
+    def unique_id(self) -> str:
+        """Return the unique ID."""
+
+        return (
+            f"{DOMAIN}_{self._entity_suffix}"
+        )
+
+    @property
+    def available(self) -> bool:
+        """Return entity availability."""
+
+        return super().available
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return integration device."""
+
+        return DeviceInfo(
+            identifiers={(DOMAIN, "summary")},
+            manufacturer=MANUFACTURER,
+            model=MODEL,
+            name="Home Maintenance Center Pro",
+            sw_version=VERSION,
+            configuration_url=(
+                "https://github.com/Fabio2888/"
+                "home-maintenance-center-pro"
+            ),
+        )
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return common integration attributes."""
+
+        return {
+            "total_items": self.coordinator.item_count,
+            "enabled_items": self.coordinator.enabled_count,
+            "disabled_items": self.coordinator.disabled_count,
+            "due_items": self.coordinator.due_count,
+            "overdue_items": self.coordinator.overdue_count,
+            "ok_items": self.coordinator.ok_count,
         }
