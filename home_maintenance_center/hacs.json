@@ -1,9 +1,0 @@
-{
-  "name": "Home Maintenance Center Pro",
-  "country": ["IT"],
-  "homeassistant": "2026.1.0",
-  "render_readme": true,
-  "content_in_root": false,
-  "filename": false,
-  "zip_release": false
-}
