@@ -10,6 +10,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.storage import Store
 
 from ..const import DOMAIN, STORAGE_KEY, STORAGE_VERSION
+from ..default_items import get_default_items
 from ..models.maintenance_item import MaintenanceItem
 
 _LOGGER = logging.getLogger(__name__)
@@ -37,7 +38,17 @@ class StorageManager:
         data = await self.store.async_load()
 
         if not data:
-            _LOGGER.info("No stored maintenance items found.")
+
+            _LOGGER.info(
+                "First start detected, creating default maintenance items."
+            )
+
+            self.items = {
+                item.item_id: item
+                for item in get_default_items()
+            }
+
+            await self.async_save()
             return
 
         self.items = {
@@ -52,6 +63,9 @@ class StorageManager:
 
     async def async_save(self) -> None:
         """Save data."""
+
+        for item in self.items.values():
+            item.calculate_next_maintenance()
 
         await self.store.async_save(
             {
@@ -81,6 +95,8 @@ class StorageManager:
     ) -> None:
         """Add a maintenance item."""
 
+        item.calculate_next_maintenance()
+
         self.items[item.item_id] = item
 
         await self.async_save()
@@ -90,6 +106,8 @@ class StorageManager:
         item: MaintenanceItem,
     ) -> None:
         """Update maintenance item."""
+
+        item.calculate_next_maintenance()
 
         self.items[item.item_id] = item
 
