@@ -32,15 +32,28 @@ class StorageManager:
 
         self.items: dict[str, MaintenanceItem] = {}
 
+        self._loaded = False
+
     async def async_load(self) -> None:
         """Load stored data."""
 
-        data = await self.store.async_load()
+        if self._loaded:
+            return
+
+        try:
+            data = await self.store.async_load()
+
+        except Exception as err:
+            _LOGGER.exception(
+                "Unable to load storage: %s",
+                err,
+            )
+            data = None
 
         if not data:
 
             _LOGGER.info(
-                "First start detected, creating default maintenance items."
+                "Creating default maintenance items."
             )
 
             self.items = {
@@ -49,12 +62,16 @@ class StorageManager:
             }
 
             await self.async_save()
+
+            self._loaded = True
             return
 
         self.items = {
             item["item_id"]: MaintenanceItem.from_dict(item)
             for item in data.get("items", [])
         }
+
+        self._loaded = True
 
         _LOGGER.info(
             "Loaded %s maintenance items.",
@@ -79,7 +96,10 @@ class StorageManager:
     def get_items(self) -> list[MaintenanceItem]:
         """Return all items."""
 
-        return list(self.items.values())
+        return sorted(
+            self.items.values(),
+            key=lambda item: item.name.lower(),
+        )
 
     def get_item(
         self,
