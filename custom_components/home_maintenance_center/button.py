@@ -4,8 +4,6 @@ Button platform for Home Maintenance Center Pro.
 
 from __future__ import annotations
 
-from datetime import date, timedelta
-
 from homeassistant.components.button import ButtonEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -14,6 +12,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .const import DOMAIN
 from .coordinator import HomeMaintenanceCoordinator
 from .entity import HomeMaintenanceEntity
+from .models.maintenance_item import MaintenanceItem
 
 
 async def async_setup_entry(
@@ -27,15 +26,15 @@ async def async_setup_entry(
         DOMAIN
     ][entry.entry_id]
 
-    entities = [
-        MaintenanceDoneButton(
-            coordinator,
-            item,
-        )
-        for item in coordinator.items
-    ]
-
-    async_add_entities(entities)
+    async_add_entities(
+        [
+            MaintenanceDoneButton(
+                coordinator,
+                item,
+            )
+            for item in coordinator.items
+        ]
+    )
 
 
 class MaintenanceDoneButton(
@@ -44,28 +43,26 @@ class MaintenanceDoneButton(
 ):
     """Button used to register a completed maintenance."""
 
+    _attr_name = "Mark Maintenance Done"
+
     _attr_icon = "mdi:check-circle-outline"
 
     def __init__(
         self,
         coordinator: HomeMaintenanceCoordinator,
-        item,
+        item: MaintenanceItem,
     ) -> None:
         """Initialize button."""
 
-        super().__init__(coordinator, item)
-
-        self._attr_name = "Mark Maintenance Done"
+        super().__init__(
+            coordinator,
+            item,
+        )
 
     async def async_press(self) -> None:
-        """Handle button press."""
+        """Mark maintenance as completed."""
 
-        today = date.today()
-
-        self.item.last_maintenance = today
-        self.item.next_maintenance = (
-            today + timedelta(days=self.item.interval_days)
-        )
+        self.item.mark_completed()
 
         await self.coordinator.async_update_item(
             self.item
