@@ -31,15 +31,11 @@ class MaintenanceItem:
     notes: str = ""
 
     manual_url: str = ""
-
     image: str = ""
-
     purchase_url: str = ""
 
     model: str = ""
-
     serial_number: str = ""
-
     location: str = ""
 
     estimated_cost: float = 0.0
@@ -51,15 +47,18 @@ class MaintenanceItem:
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def calculate_next_maintenance(self) -> None:
-        """Calculate next maintenance date."""
+        """Calculate the next maintenance date."""
 
         if self.last_maintenance is None:
             self.next_maintenance = None
             return
 
+        # Evita intervalli non validi
+        interval = max(1, self.interval_days)
+
         self.next_maintenance = (
             self.last_maintenance
-            + timedelta(days=self.interval_days)
+            + timedelta(days=interval)
         )
 
     @property
@@ -80,10 +79,10 @@ class MaintenanceItem:
 
         remaining = self.days_remaining
 
-        if remaining is None:
-            return False
-
-        return remaining < 0
+        return (
+            remaining is not None
+            and remaining < 0
+        )
 
     def mark_completed(self) -> None:
         """Mark maintenance as completed."""
@@ -120,34 +119,36 @@ class MaintenanceItem:
             "location": self.location,
             "estimated_cost": self.estimated_cost,
             "notify": self.notify,
-            "tags": self.tags,
-            "metadata": self.metadata,
+            "tags": self.tags.copy(),
+            "metadata": self.metadata.copy(),
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "MaintenanceItem":
+    def from_dict(
+        cls,
+        data: dict[str, Any],
+    ) -> "MaintenanceItem":
         """Create object from dictionary."""
-
-        last = (
-            date.fromisoformat(data["last_maintenance"])
-            if data.get("last_maintenance")
-            else None
-        )
-
-        next_due = (
-            date.fromisoformat(data["next_maintenance"])
-            if data.get("next_maintenance")
-            else None
-        )
 
         item = cls(
             item_id=data["item_id"],
             name=data["name"],
             category=data.get("category", "general"),
             priority=data.get("priority", "normal"),
-            interval_days=data.get("interval_days", 180),
-            last_maintenance=last,
-            next_maintenance=next_due,
+            interval_days=max(
+                1,
+                data.get("interval_days", 180),
+            ),
+            last_maintenance=(
+                date.fromisoformat(data["last_maintenance"])
+                if data.get("last_maintenance")
+                else None
+            ),
+            next_maintenance=(
+                date.fromisoformat(data["next_maintenance"])
+                if data.get("next_maintenance")
+                else None
+            ),
             enabled=data.get("enabled", True),
             notes=data.get("notes", ""),
             manual_url=data.get("manual_url", ""),
@@ -156,13 +157,14 @@ class MaintenanceItem:
             model=data.get("model", ""),
             serial_number=data.get("serial_number", ""),
             location=data.get("location", ""),
-            estimated_cost=data.get("estimated_cost", 0.0),
+            estimated_cost=float(
+                data.get("estimated_cost", 0.0)
+            ),
             notify=data.get("notify", True),
-            tags=data.get("tags", []),
-            metadata=data.get("metadata", {}),
+            tags=list(data.get("tags", [])),
+            metadata=dict(data.get("metadata", {})),
         )
 
-        if item.next_maintenance is None:
-            item.calculate_next_maintenance()
+        item.calculate_next_maintenance()
 
         return item
