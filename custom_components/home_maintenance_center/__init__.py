@@ -26,7 +26,6 @@ PLATFORMS: tuple[Platform, ...] = (
     Platform.BUTTON,
     Platform.DATE,
     Platform.NUMBER,
-    Platform.SELECT,
     Platform.SWITCH,
     Platform.CALENDAR,
 )
@@ -83,7 +82,7 @@ async def async_unload_entry(
     )
 
     if unload_ok:
-        hass.data[DOMAIN].pop(entry.entry_id)
+        hass.data[DOMAIN].pop(entry.entry_id, None)
 
     _LOGGER.info("Configuration unloaded")
 
@@ -97,5 +96,4 @@ async def async_reload_entry(
     """Reload configuration."""
 
     await async_unload_entry(hass, entry)
-
     await async_setup_entry(hass, entry)
