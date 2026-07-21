@@ -4,6 +4,8 @@ Switch platform for Home Maintenance Center Pro.
 
 from __future__ import annotations
 
+from typing import Any
+
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -12,6 +14,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .const import DOMAIN
 from .coordinator import HomeMaintenanceCoordinator
 from .entity import HomeMaintenanceEntity
+from .models.maintenance_item import MaintenanceItem
 
 
 async def async_setup_entry(
@@ -19,21 +22,21 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up switch entities."""
+    """Set up Home Maintenance switch entities."""
 
     coordinator: HomeMaintenanceCoordinator = hass.data[
         DOMAIN
     ][entry.entry_id]
 
-    entities = [
-        MaintenanceEnabledSwitch(
-            coordinator,
-            item,
-        )
-        for item in coordinator.items
-    ]
-
-    async_add_entities(entities)
+    async_add_entities(
+        [
+            MaintenanceEnabledSwitch(
+                coordinator,
+                item,
+            )
+            for item in coordinator.items
+        ]
+    )
 
 
 class MaintenanceEnabledSwitch(
@@ -42,27 +45,34 @@ class MaintenanceEnabledSwitch(
 ):
     """Enable or disable maintenance tracking."""
 
+    _attr_translation_key = "enabled"
     _attr_icon = "mdi:calendar-check"
 
     def __init__(
         self,
         coordinator: HomeMaintenanceCoordinator,
-        item,
+        item: MaintenanceItem,
     ) -> None:
-        """Initialize switch."""
+        """Initialize the switch."""
 
-        super().__init__(coordinator, item)
+        super().__init__(
+            coordinator,
+            item,
+        )
 
-        self._attr_name = "Monitoring Enabled"
+        self._entity_suffix = "enabled"
 
     @property
     def is_on(self) -> bool:
-        """Return if monitoring is enabled."""
+        """Return True if monitoring is enabled."""
 
         return self.item.enabled
 
-    async def async_turn_on(self, **kwargs) -> None:
-        """Enable monitoring."""
+    async def async_turn_on(
+        self,
+        **kwargs: Any,
+    ) -> None:
+        """Enable maintenance monitoring."""
 
         self.item.enabled = True
 
@@ -70,8 +80,11 @@ class MaintenanceEnabledSwitch(
             self.item
         )
 
-    async def async_turn_off(self, **kwargs) -> None:
-        """Disable monitoring."""
+    async def async_turn_off(
+        self,
+        **kwargs: Any,
+    ) -> None:
+        """Disable maintenance monitoring."""
 
         self.item.enabled = False
 
