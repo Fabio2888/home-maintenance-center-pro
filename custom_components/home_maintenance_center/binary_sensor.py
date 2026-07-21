@@ -14,7 +14,10 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
 from .coordinator import HomeMaintenanceCoordinator
-from .entity import HomeMaintenanceEntity
+from .entity import (
+    HomeMaintenanceEntity,
+    HomeMaintenanceSummaryEntity,
+)
 from .models.maintenance_item import MaintenanceItem
 
 
@@ -29,11 +32,11 @@ async def async_setup_entry(
         DOMAIN
     ][entry.entry_id]
 
-    async_add_entities(
-        [
-            entity
-            for item in coordinator.items
-            for entity in (
+    entities: list[BinarySensorEntity] = []
+
+    for item in coordinator.items:
+        entities.extend(
+            (
                 MaintenanceDueBinarySensor(
                     coordinator,
                     item,
@@ -43,8 +46,20 @@ async def async_setup_entry(
                     item,
                 ),
             )
-        ]
+        )
+
+    entities.extend(
+        (
+            AttentionRequiredBinarySensor(
+                coordinator,
+            ),
+            HealthyBinarySensor(
+                coordinator,
+            ),
+        )
     )
+
+    async_add_entities(entities)
 
 
 class MaintenanceDueBinarySensor(
@@ -62,7 +77,7 @@ class MaintenanceDueBinarySensor(
         coordinator: HomeMaintenanceCoordinator,
         item: MaintenanceItem,
     ) -> None:
-        """Initialize the binary sensor."""
+        """Initialize entity."""
 
         super().__init__(
             coordinator,
@@ -73,7 +88,7 @@ class MaintenanceDueBinarySensor(
 
     @property
     def is_on(self) -> bool:
-        """Return True if maintenance is due soon."""
+        """Return True if maintenance is due."""
 
         if self.item.days_remaining is None:
             return False
@@ -96,7 +111,7 @@ class MaintenanceOverdueBinarySensor(
         coordinator: HomeMaintenanceCoordinator,
         item: MaintenanceItem,
     ) -> None:
-        """Initialize the binary sensor."""
+        """Initialize entity."""
 
         super().__init__(
             coordinator,
@@ -110,3 +125,65 @@ class MaintenanceOverdueBinarySensor(
         """Return True if maintenance is overdue."""
 
         return self.item.overdue
+
+
+class AttentionRequiredBinarySensor(
+    HomeMaintenanceSummaryEntity,
+    BinarySensorEntity,
+):
+    """Binary sensor indicating that maintenance requires attention."""
+
+    _attr_translation_key = "attention_required"
+    _attr_device_class = BinarySensorDeviceClass.PROBLEM
+    _attr_icon = "mdi:alert"
+
+    def __init__(
+        self,
+        coordinator: HomeMaintenanceCoordinator,
+    ) -> None:
+        """Initialize entity."""
+
+        super().__init__(coordinator)
+
+        self._entity_suffix = "attention_required"
+
+        self._attr_suggested_object_id = (
+            f"{DOMAIN}_attention_required"
+        )
+
+    @property
+    def is_on(self) -> bool:
+        """Return True if attention is required."""
+
+        return self.coordinator.attention_required
+
+
+class HealthyBinarySensor(
+    HomeMaintenanceSummaryEntity,
+    BinarySensorEntity,
+):
+    """Binary sensor indicating that everything is healthy."""
+
+    _attr_translation_key = "healthy"
+    _attr_device_class = BinarySensorDeviceClass.PROBLEM
+    _attr_icon = "mdi:check-circle"
+
+    def __init__(
+        self,
+        coordinator: HomeMaintenanceCoordinator,
+    ) -> None:
+        """Initialize entity."""
+
+        super().__init__(coordinator)
+
+        self._entity_suffix = "healthy"
+
+        self._attr_suggested_object_id = (
+            f"{DOMAIN}_healthy"
+        )
+
+    @property
+    def is_on(self) -> bool:
+        """Return True if no maintenance requires attention."""
+
+        return not self.coordinator.attention_required
