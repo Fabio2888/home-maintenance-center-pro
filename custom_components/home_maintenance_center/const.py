@@ -10,13 +10,13 @@ from homeassistant.const import Platform
 # -----------------------------------------------------------------------------
 #
 
-DOMAIN = "home_maintenance_center"
+DOMAIN = "home_maintenance"
 
 NAME = "Home Maintenance Center Pro"
 
 MANUFACTURER = "Fabio2888"
 
-MODEL = "Home Maintenance Center"
+MODEL = "Home Maintenance Center Pro"
 
 VERSION = "2.0.0"
 
@@ -157,21 +157,13 @@ COLOR_DISABLED = "#9E9E9E"
 # -----------------------------------------------------------------------------
 #
 
-EVENT_MAINTENANCE_COMPLETED = (
-    f"{DOMAIN}_maintenance_completed"
-)
+EVENT_MAINTENANCE_COMPLETED = f"{DOMAIN}_maintenance_completed"
 
-EVENT_MAINTENANCE_CREATED = (
-    f"{DOMAIN}_maintenance_created"
-)
+EVENT_MAINTENANCE_CREATED = f"{DOMAIN}_maintenance_created"
 
-EVENT_MAINTENANCE_UPDATED = (
-    f"{DOMAIN}_maintenance_updated"
-)
+EVENT_MAINTENANCE_UPDATED = f"{DOMAIN}_maintenance_updated"
 
-EVENT_MAINTENANCE_DELETED = (
-    f"{DOMAIN}_maintenance_deleted"
-)
+EVENT_MAINTENANCE_DELETED = f"{DOMAIN}_maintenance_deleted"
 
 #
 # -----------------------------------------------------------------------------
@@ -287,4 +279,4 @@ DIAGNOSTICS_REDACT = {
 # -----------------------------------------------------------------------------
 #
 
-LOGGER_NAME = "custom_components.home_maintenance_center"
+LOGGER_NAME = "custom_components.home_maintenance"
