@@ -31,17 +31,15 @@ async def async_setup_entry(
         DOMAIN
     ][entry.entry_id]
 
-    entities = []
-
-    for item in coordinator.items:
-        entities.append(
+    async_add_entities(
+        [
             DaysRemainingSensor(
                 coordinator,
                 item,
             )
-        )
-
-    async_add_entities(entities)
+            for item in coordinator.items
+        ]
+    )
 
 
 class DaysRemainingSensor(
@@ -50,15 +48,17 @@ class DaysRemainingSensor(
 ):
     """Days remaining sensor."""
 
+    _attr_name = "Days Remaining"
+
+    _attr_icon = "mdi:calendar-clock"
+
     _attr_state_class = SensorStateClass.MEASUREMENT
 
     _attr_native_unit_of_measurement = UnitOfTime.DAYS
 
-    _attr_icon = "mdi:calendar-clock"
-
     def __init__(
         self,
-        coordinator,
+        coordinator: HomeMaintenanceCoordinator,
         item,
     ) -> None:
         """Initialize sensor."""
@@ -68,10 +68,8 @@ class DaysRemainingSensor(
             item,
         )
 
-        self._attr_name = "Days Remaining"
-
     @property
-    def native_value(self):
+    def native_value(self) -> int | None:
         """Return days remaining."""
 
         if self.item.next_maintenance is None:
