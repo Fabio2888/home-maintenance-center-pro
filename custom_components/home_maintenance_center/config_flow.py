@@ -7,6 +7,7 @@ from __future__ import annotations
 import voluptuous as vol
 
 from homeassistant import config_entries
+from homeassistant.config_entries import ConfigFlowResult
 from homeassistant.const import CONF_NAME
 
 from .const import DOMAIN
@@ -32,8 +33,8 @@ class HomeMaintenanceConfigFlow(
 
     async def async_step_user(
         self,
-        user_input=None,
-    ):
+        user_input: dict | None = None,
+    ) -> ConfigFlowResult:
         """Handle the initial step."""
 
         if self._async_current_entries():
@@ -42,7 +43,6 @@ class HomeMaintenanceConfigFlow(
             )
 
         if user_input is not None:
-
             return self.async_create_entry(
                 title=user_input[CONF_NAME],
                 data=user_input,
@@ -55,8 +55,8 @@ class HomeMaintenanceConfigFlow(
 
     async def async_step_import(
         self,
-        user_input,
-    ):
+        user_input: dict,
+    ) -> ConfigFlowResult:
         """Handle YAML import."""
 
         return self.async_abort(
@@ -73,6 +73,4 @@ class HomeMaintenanceConfigFlow(
             HomeMaintenanceOptionsFlow,
         )
 
-        return HomeMaintenanceOptionsFlow(
-            config_entry
-        )
+        return HomeMaintenanceOptionsFlow()
