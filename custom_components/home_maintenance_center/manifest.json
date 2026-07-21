@@ -1,21 +1,21 @@
 {
-  domain home_maintenance_center,
-  name Home Maintenance Center Pro,
-  version 2.0.0,
-  documentation httpsgithub.comFabio2888home-maintenance-center,
-  issue_tracker httpsgithub.comFabio2888home-maintenance-centerissues,
-  codeowners [
-    @Fabio2888
+  "domain": "home_maintenance_center",
+  "name": "Home Maintenance Center Pro",
+  "version": "0.2.0",
+  "documentation": "https://github.com/Fabio2888/home-maintenance-center-pro",
+  "issue_tracker": "https://github.com/Fabio2888/home-maintenance-center-pro/issues",
+  "codeowners": [
+    "@Fabio2888"
   ],
-  config_flow true,
-  integration_type hub,
-  iot_class local_push,
-  single_config_entry true,
-  loggers [
-    custom_components.home_maintenance_center
+  "config_flow": true,
+  "integration_type": "hub",
+  "iot_class": "local_polling",
+  "single_config_entry": true,
+  "loggers": [
+    "custom_components.home_maintenance_center"
   ],
-  requirements [],
-  dependencies [],
-  after_dependencies [],
-  quality_scale gold
+  "requirements": [],
+  "dependencies": [],
+  "after_dependencies": [],
+  "quality_scale": "silver"
 }
