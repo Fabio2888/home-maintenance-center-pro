@@ -47,6 +47,30 @@
     "sensor": {
       "days_remaining": {
         "name": "Days remaining"
+      },
+      "total": {
+        "name": "Total maintenance items"
+      },
+      "enabled": {
+        "name": "Enabled maintenance"
+      },
+      "disabled": {
+        "name": "Disabled maintenance"
+      },
+      "due": {
+        "name": "Maintenance due soon"
+      },
+      "overdue": {
+        "name": "Overdue maintenance"
+      },
+      "ok": {
+        "name": "Maintenance OK"
+      },
+      "next_due": {
+        "name": "Next maintenance"
+      },
+      "next_due_days": {
+        "name": "Days until next maintenance"
       }
     },
     "binary_sensor": {
@@ -55,6 +79,12 @@
       },
       "overdue": {
         "name": "Maintenance overdue"
+      },
+      "attention_required": {
+        "name": "Attention required"
+      },
+      "healthy": {
+        "name": "Maintenance status"
       }
     },
     "button": {
