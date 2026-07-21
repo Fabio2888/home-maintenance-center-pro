@@ -4,8 +4,6 @@ Sensor platform for Home Maintenance Center Pro.
 
 from __future__ import annotations
 
-from datetime import date
-
 from homeassistant.components.sensor import (
     SensorEntity,
     SensorStateClass,
@@ -18,6 +16,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .const import DOMAIN
 from .coordinator import HomeMaintenanceCoordinator
 from .entity import HomeMaintenanceEntity
+from .models.maintenance_item import MaintenanceItem
 
 
 async def async_setup_entry(
@@ -48,34 +47,27 @@ class DaysRemainingSensor(
 ):
     """Days remaining sensor."""
 
-    _attr_name = "Days Remaining"
-
+    _attr_translation_key = "days_remaining"
     _attr_icon = "mdi:calendar-clock"
-
     _attr_state_class = SensorStateClass.MEASUREMENT
-
     _attr_native_unit_of_measurement = UnitOfTime.DAYS
 
     def __init__(
         self,
         coordinator: HomeMaintenanceCoordinator,
-        item,
+        item: MaintenanceItem,
     ) -> None:
-        """Initialize sensor."""
+        """Initialize the sensor."""
 
         super().__init__(
             coordinator,
             item,
         )
 
+        self._entity_suffix = "days_remaining"
+
     @property
     def native_value(self) -> int | None:
-        """Return days remaining."""
+        """Return the remaining days before maintenance."""
 
-        if self.item.next_maintenance is None:
-            return None
-
-        return (
-            self.item.next_maintenance
-            - date.today()
-        ).days
+        return self.item.days_remaining
