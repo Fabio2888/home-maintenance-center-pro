@@ -14,6 +14,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .const import DOMAIN
 from .coordinator import HomeMaintenanceCoordinator
 from .entity import HomeMaintenanceEntity
+from .models.maintenance_item import MaintenanceItem
 
 
 async def async_setup_entry(
@@ -21,45 +22,49 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up date entities."""
+    """Set up Home Maintenance date entities."""
 
     coordinator: HomeMaintenanceCoordinator = hass.data[
         DOMAIN
     ][entry.entry_id]
 
-    entities = [
-        LastMaintenanceDate(
-            coordinator,
-            item,
-        )
-        for item in coordinator.items
-    ]
-
-    async_add_entities(entities)
+    async_add_entities(
+        [
+            LastMaintenanceDate(
+                coordinator,
+                item,
+            )
+            for item in coordinator.items
+        ]
+    )
 
 
 class LastMaintenanceDate(
     HomeMaintenanceEntity,
     DateEntity,
 ):
-    """Last maintenance date."""
+    """Last maintenance date entity."""
 
+    _attr_translation_key = "last_maintenance"
     _attr_icon = "mdi:calendar-check"
 
     def __init__(
         self,
         coordinator: HomeMaintenanceCoordinator,
-        item,
+        item: MaintenanceItem,
     ) -> None:
-        """Initialize entity."""
+        """Initialize the date entity."""
 
-        super().__init__(coordinator, item)
+        super().__init__(
+            coordinator,
+            item,
+        )
 
-        self._attr_name = "Last Maintenance"
+        self._entity_suffix = "last_maintenance"
 
     @property
     def native_value(self) -> date | None:
-        """Return last maintenance date."""
+        """Return the last maintenance date."""
 
         return self.item.last_maintenance
 
@@ -67,10 +72,9 @@ class LastMaintenanceDate(
         self,
         value: date,
     ) -> None:
-        """Update maintenance date."""
+        """Update the last maintenance date."""
 
         self.item.last_maintenance = value
-
         self.item.next_maintenance = (
             value
             + timedelta(days=self.item.interval_days)
