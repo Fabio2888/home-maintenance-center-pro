@@ -44,27 +44,22 @@
     }
   },
   "entity": {
-    "button": {
-      "maintenance_done": {
-        "name": "Maintenance completed"
-      }
-    },
     "sensor": {
       "days_remaining": {
         "name": "Days remaining"
       }
     },
     "binary_sensor": {
-      "maintenance_due": {
+      "due": {
         "name": "Maintenance due"
       },
-      "maintenance_overdue": {
+      "overdue": {
         "name": "Maintenance overdue"
       }
     },
-    "number": {
-      "maintenance_interval": {
-        "name": "Maintenance interval"
+    "button": {
+      "mark_done": {
+        "name": "Mark maintenance completed"
       }
     },
     "date": {
@@ -72,8 +67,13 @@
         "name": "Last maintenance"
       }
     },
+    "number": {
+      "interval": {
+        "name": "Maintenance interval"
+      }
+    },
     "switch": {
-      "monitoring_enabled": {
+      "enabled": {
         "name": "Monitoring enabled"
       }
     },
