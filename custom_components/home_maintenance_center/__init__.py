@@ -25,7 +25,7 @@ async def async_setup(
     hass: HomeAssistant,
     config: dict[str, Any],
 ) -> bool:
-    """Set up Home Maintenance Center Pro."""
+    """Set up the Home Maintenance integration."""
 
     hass.data.setdefault(DOMAIN, {})
 
@@ -94,5 +94,4 @@ async def async_reload_entry(
 ) -> None:
     """Reload a config entry."""
 
-    await async_unload_entry(hass, entry)
-    await async_setup_entry(hass, entry)
+    await hass.config_entries.async_reload(entry.entry_id)
