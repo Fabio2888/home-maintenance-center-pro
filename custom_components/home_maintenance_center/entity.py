@@ -4,10 +4,17 @@ Base entity for Home Maintenance Center Pro.
 
 from __future__ import annotations
 
+from typing import Any
+
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, MANUFACTURER, MODEL, VERSION
+from .const import (
+    DOMAIN,
+    MANUFACTURER,
+    MODEL,
+    VERSION,
+)
 from .coordinator import HomeMaintenanceCoordinator
 from .models.maintenance_item import MaintenanceItem
 
@@ -35,6 +42,8 @@ class HomeMaintenanceEntity(
             f"{DOMAIN}_{item.item_id}_{self.__class__.__name__.lower()}"
         )
 
+        self._attr_suggested_object_id = item.item_id
+
     @property
     def name(self) -> str:
         """Return entity name."""
@@ -45,7 +54,10 @@ class HomeMaintenanceEntity(
     def available(self) -> bool:
         """Return entity availability."""
 
-        return self.item.enabled
+        return (
+            super().available
+            and self.item.enabled
+        )
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -57,11 +69,15 @@ class HomeMaintenanceEntity(
             model=MODEL,
             name=self.item.name,
             sw_version=VERSION,
+            configuration_url=(
+                "https://github.com/Fabio2888/"
+                "home-maintenance-center-pro"
+            ),
         )
 
     @property
-    def extra_state_attributes(self) -> dict:
-        """Return common attributes."""
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return common entity attributes."""
 
         return {
             "item_id": self.item.item_id,
