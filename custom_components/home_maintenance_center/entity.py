@@ -15,9 +15,10 @@ from .models.maintenance_item import MaintenanceItem
 class HomeMaintenanceEntity(
     CoordinatorEntity[HomeMaintenanceCoordinator]
 ):
-    """Base entity for all Home Maintenance Center entities."""
+    """Base entity for Home Maintenance Center entities."""
 
     _attr_has_entity_name = True
+    _attr_should_poll = False
 
     def __init__(
         self,
@@ -33,6 +34,12 @@ class HomeMaintenanceEntity(
         self._attr_unique_id = (
             f"{DOMAIN}_{item.item_id}_{self.__class__.__name__.lower()}"
         )
+
+    @property
+    def name(self) -> str:
+        """Return entity name."""
+
+        return self.item.name
 
     @property
     def available(self) -> bool:
@@ -57,11 +64,14 @@ class HomeMaintenanceEntity(
         """Return common attributes."""
 
         return {
+            "item_id": self.item.item_id,
             "category": self.item.category,
             "priority": self.item.priority,
             "interval_days": self.item.interval_days,
             "last_maintenance": self.item.last_maintenance,
             "next_maintenance": self.item.next_maintenance,
+            "days_remaining": self.item.days_remaining,
+            "overdue": self.item.overdue,
             "notes": self.item.notes,
             "location": self.item.location,
             "model": self.item.model,
