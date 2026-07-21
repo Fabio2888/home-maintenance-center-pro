@@ -7,7 +7,7 @@ Home Maintenance Center Pro
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, timedelta
 from typing import Any
 
 
@@ -49,6 +49,47 @@ class MaintenanceItem:
     tags: list[str] = field(default_factory=list)
 
     metadata: dict[str, Any] = field(default_factory=dict)
+
+    def calculate_next_maintenance(self) -> None:
+        """Calculate next maintenance date."""
+
+        if self.last_maintenance is None:
+            self.next_maintenance = None
+            return
+
+        self.next_maintenance = (
+            self.last_maintenance
+            + timedelta(days=self.interval_days)
+        )
+
+    @property
+    def days_remaining(self) -> int | None:
+        """Return remaining days before maintenance."""
+
+        if self.next_maintenance is None:
+            return None
+
+        return (
+            self.next_maintenance
+            - date.today()
+        ).days
+
+    @property
+    def overdue(self) -> bool:
+        """Return True if maintenance is overdue."""
+
+        remaining = self.days_remaining
+
+        if remaining is None:
+            return False
+
+        return remaining < 0
+
+    def mark_completed(self) -> None:
+        """Mark maintenance as completed."""
+
+        self.last_maintenance = date.today()
+        self.calculate_next_maintenance()
 
     def to_dict(self) -> dict[str, Any]:
         """Convert object to dictionary."""
@@ -99,7 +140,7 @@ class MaintenanceItem:
             else None
         )
 
-        return cls(
+        item = cls(
             item_id=data["item_id"],
             name=data["name"],
             category=data.get("category", "general"),
@@ -120,3 +161,8 @@ class MaintenanceItem:
             tags=data.get("tags", []),
             metadata=data.get("metadata", {}),
         )
+
+        if item.next_maintenance is None:
+            item.calculate_next_maintenance()
+
+        return item
