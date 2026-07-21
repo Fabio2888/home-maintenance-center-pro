@@ -4,8 +4,6 @@ Binary Sensor platform for Home Maintenance Center Pro.
 
 from __future__ import annotations
 
-from datetime import date
-
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,
@@ -17,6 +15,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .const import DOMAIN
 from .coordinator import HomeMaintenanceCoordinator
 from .entity import HomeMaintenanceEntity
+from .models.maintenance_item import MaintenanceItem
 
 
 async def async_setup_entry(
@@ -30,11 +29,11 @@ async def async_setup_entry(
         DOMAIN
     ][entry.entry_id]
 
-    entities = []
-
-    for item in coordinator.items:
-        entities.extend(
-            [
+    async_add_entities(
+        [
+            entity
+            for item in coordinator.items
+            for entity in (
                 MaintenanceDueBinarySensor(
                     coordinator,
                     item,
@@ -43,10 +42,9 @@ async def async_setup_entry(
                     coordinator,
                     item,
                 ),
-            ]
-        )
-
-    async_add_entities(entities)
+            )
+        ]
+    )
 
 
 class MaintenanceDueBinarySensor(
@@ -55,31 +53,32 @@ class MaintenanceDueBinarySensor(
 ):
     """Maintenance due sensor."""
 
+    _attr_name = "Maintenance Due"
+
     _attr_device_class = BinarySensorDeviceClass.PROBLEM
+
     _attr_icon = "mdi:calendar-alert"
 
     def __init__(
         self,
-        coordinator,
-        item,
+        coordinator: HomeMaintenanceCoordinator,
+        item: MaintenanceItem,
     ) -> None:
-        super().__init__(coordinator, item)
+        """Initialize entity."""
 
-        self._attr_name = "Maintenance Due"
+        super().__init__(
+            coordinator,
+            item,
+        )
 
     @property
     def is_on(self) -> bool:
         """Return True if maintenance is approaching."""
 
-        if self.item.next_maintenance is None:
+        if self.item.days_remaining is None:
             return False
 
-        days = (
-            self.item.next_maintenance
-            - date.today()
-        ).days
-
-        return days <= 30
+        return self.item.days_remaining <= 30
 
 
 class MaintenanceOverdueBinarySensor(
@@ -88,23 +87,26 @@ class MaintenanceOverdueBinarySensor(
 ):
     """Maintenance overdue sensor."""
 
+    _attr_name = "Maintenance Overdue"
+
     _attr_device_class = BinarySensorDeviceClass.PROBLEM
+
     _attr_icon = "mdi:alert-circle"
 
     def __init__(
         self,
-        coordinator,
-        item,
+        coordinator: HomeMaintenanceCoordinator,
+        item: MaintenanceItem,
     ) -> None:
-        super().__init__(coordinator, item)
+        """Initialize entity."""
 
-        self._attr_name = "Maintenance Overdue"
+        super().__init__(
+            coordinator,
+            item,
+        )
 
     @property
     def is_on(self) -> bool:
         """Return True if maintenance is overdue."""
 
-        if self.item.next_maintenance is None:
-            return False
-
-        return self.item.next_maintenance < date.today()
+        return self.item.overdue
