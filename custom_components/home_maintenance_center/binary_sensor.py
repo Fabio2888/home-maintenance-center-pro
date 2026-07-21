@@ -23,7 +23,7 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up binary sensors."""
+    """Set up Home Maintenance binary sensors."""
 
     coordinator: HomeMaintenanceCoordinator = hass.data[
         DOMAIN
@@ -51,12 +51,10 @@ class MaintenanceDueBinarySensor(
     HomeMaintenanceEntity,
     BinarySensorEntity,
 ):
-    """Maintenance due sensor."""
+    """Maintenance due binary sensor."""
 
-    _attr_name = "Maintenance Due"
-
+    _attr_translation_key = "due"
     _attr_device_class = BinarySensorDeviceClass.PROBLEM
-
     _attr_icon = "mdi:calendar-alert"
 
     def __init__(
@@ -64,33 +62,33 @@ class MaintenanceDueBinarySensor(
         coordinator: HomeMaintenanceCoordinator,
         item: MaintenanceItem,
     ) -> None:
-        """Initialize entity."""
+        """Initialize the binary sensor."""
 
         super().__init__(
             coordinator,
             item,
         )
 
+        self._entity_suffix = "due"
+
     @property
     def is_on(self) -> bool:
-        """Return True if maintenance is approaching."""
+        """Return True if maintenance is due soon."""
 
         if self.item.days_remaining is None:
             return False
 
-        return self.item.days_remaining <= 30
+        return 0 <= self.item.days_remaining <= 30
 
 
 class MaintenanceOverdueBinarySensor(
     HomeMaintenanceEntity,
     BinarySensorEntity,
 ):
-    """Maintenance overdue sensor."""
+    """Maintenance overdue binary sensor."""
 
-    _attr_name = "Maintenance Overdue"
-
+    _attr_translation_key = "overdue"
     _attr_device_class = BinarySensorDeviceClass.PROBLEM
-
     _attr_icon = "mdi:alert-circle"
 
     def __init__(
@@ -98,12 +96,14 @@ class MaintenanceOverdueBinarySensor(
         coordinator: HomeMaintenanceCoordinator,
         item: MaintenanceItem,
     ) -> None:
-        """Initialize entity."""
+        """Initialize the binary sensor."""
 
         super().__init__(
             coordinator,
             item,
         )
+
+        self._entity_suffix = "overdue"
 
     @property
     def is_on(self) -> bool:
