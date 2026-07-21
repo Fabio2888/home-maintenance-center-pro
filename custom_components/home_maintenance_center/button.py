@@ -43,8 +43,7 @@ class MaintenanceDoneButton(
 ):
     """Button used to register a completed maintenance."""
 
-    _attr_name = "Mark Maintenance Done"
-
+    _attr_translation_key = "mark_done"
     _attr_icon = "mdi:check-circle-outline"
 
     def __init__(
@@ -52,12 +51,14 @@ class MaintenanceDoneButton(
         coordinator: HomeMaintenanceCoordinator,
         item: MaintenanceItem,
     ) -> None:
-        """Initialize button."""
+        """Initialize the button."""
 
         super().__init__(
             coordinator,
             item,
         )
+
+        self._entity_suffix = "mark_done"
 
     async def async_press(self) -> None:
         """Mark maintenance as completed."""
