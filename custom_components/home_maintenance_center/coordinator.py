@@ -42,7 +42,7 @@ class HomeMaintenanceCoordinator(DataUpdateCoordinator[dict]):
         )
 
     async def _async_update_data(self) -> dict:
-        """Fetch latest data from storage."""
+        """Load latest data."""
 
         try:
             await self.storage.async_load()
@@ -97,33 +97,34 @@ class HomeMaintenanceCoordinator(DataUpdateCoordinator[dict]):
 
     @property
     def enabled_count(self) -> int:
-        """Return enabled maintenance count."""
+        """Return enabled maintenance items."""
 
         return len(self.enabled_items)
 
     @property
     def disabled_count(self) -> int:
-        """Return disabled maintenance count."""
+        """Return disabled maintenance items."""
 
         return len(self.disabled_items)
 
     # ---------------------------------------------------------------------
-    # Maintenance status
+    # Status
     # ---------------------------------------------------------------------
 
     @property
     def due_items(self) -> list[MaintenanceItem]:
-        """Return maintenance items due within 30 days."""
+        """Return items due within 30 days."""
 
         return [
             item
             for item in self.enabled_items
-            if 0 <= item.days_remaining <= 30
+            if item.days_remaining is not None
+            and 0 <= item.days_remaining <= 30
         ]
 
     @property
     def overdue_items(self) -> list[MaintenanceItem]:
-        """Return overdue maintenance items."""
+        """Return overdue items."""
 
         return [
             item
@@ -133,29 +134,30 @@ class HomeMaintenanceCoordinator(DataUpdateCoordinator[dict]):
 
     @property
     def ok_items(self) -> list[MaintenanceItem]:
-        """Return maintenance items not requiring attention."""
+        """Return items not requiring attention."""
 
         return [
             item
             for item in self.enabled_items
-            if item.days_remaining > 30
+            if item.days_remaining is not None
+            and item.days_remaining > 30
         ]
 
     @property
     def due_count(self) -> int:
-        """Return due maintenance count."""
+        """Return due count."""
 
         return len(self.due_items)
 
     @property
     def overdue_count(self) -> int:
-        """Return overdue maintenance count."""
+        """Return overdue count."""
 
         return len(self.overdue_items)
 
     @property
     def ok_count(self) -> int:
-        """Return maintenance items in good status."""
+        """Return ok count."""
 
         return len(self.ok_items)
 
@@ -163,11 +165,14 @@ class HomeMaintenanceCoordinator(DataUpdateCoordinator[dict]):
     def attention_required(self) -> bool:
         """Return True if any maintenance requires attention."""
 
-        return self.overdue_count > 0
+        return (
+            self.due_count > 0
+            or self.overdue_count > 0
+        )
 
     @property
     def next_due_item(self) -> MaintenanceItem | None:
-        """Return the next maintenance item due."""
+        """Return next scheduled maintenance."""
 
         candidates = [
             item
@@ -189,10 +194,7 @@ class HomeMaintenanceCoordinator(DataUpdateCoordinator[dict]):
 
         item = self.next_due_item
 
-        if item is None:
-            return None
-
-        return item.name
+        return None if item is None else item.name
 
     @property
     def next_due_days(self) -> int | None:
@@ -200,10 +202,7 @@ class HomeMaintenanceCoordinator(DataUpdateCoordinator[dict]):
 
         item = self.next_due_item
 
-        if item is None:
-            return None
-
-        return item.days_remaining
+        return None if item is None else item.days_remaining
 
     # ---------------------------------------------------------------------
     # CRUD
@@ -213,7 +212,7 @@ class HomeMaintenanceCoordinator(DataUpdateCoordinator[dict]):
         self,
         item: MaintenanceItem,
     ) -> None:
-        """Add a maintenance item."""
+        """Add maintenance item."""
 
         await self.storage.add_item(item)
 
@@ -223,7 +222,7 @@ class HomeMaintenanceCoordinator(DataUpdateCoordinator[dict]):
         self,
         item: MaintenanceItem,
     ) -> None:
-        """Update a maintenance item."""
+        """Update maintenance item."""
 
         await self.storage.update_item(item)
 
@@ -233,7 +232,7 @@ class HomeMaintenanceCoordinator(DataUpdateCoordinator[dict]):
         self,
         item_id: str,
     ) -> None:
-        """Delete a maintenance item."""
+        """Delete maintenance item."""
 
         await self.storage.delete_item(item_id)
 
