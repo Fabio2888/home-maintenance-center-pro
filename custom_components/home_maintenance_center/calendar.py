@@ -4,7 +4,7 @@ Calendar platform for Home Maintenance Center Pro.
 
 from __future__ import annotations
 
-from datetime import datetime, time
+from datetime import date
 
 from homeassistant.components.calendar import (
     CalendarEntity,
@@ -12,17 +12,12 @@ from homeassistant.components.calendar import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import (
-    DOMAIN,
-    MANUFACTURER,
-    MODEL,
-    VERSION,
-)
+from .const import DOMAIN
 from .coordinator import HomeMaintenanceCoordinator
+from .models.maintenance_item import MaintenanceItem
 
 
 async def async_setup_entry(
@@ -51,11 +46,9 @@ class HomeMaintenanceCalendar(
 ):
     """Home Maintenance calendar."""
 
-    _attr_name = "Manutenzioni Casa"
+    _attr_name = "Home Maintenance"
 
     _attr_icon = "mdi:calendar-check"
-
-    _attr_suggested_object_id = "manutenzioni_casa"
 
     def __init__(
         self,
@@ -66,18 +59,6 @@ class HomeMaintenanceCalendar(
         super().__init__(coordinator)
 
         self._attr_unique_id = f"{DOMAIN}_calendar"
-
-    @property
-    def device_info(self) -> DeviceInfo:
-        """Return device information."""
-
-        return DeviceInfo(
-            identifiers={(DOMAIN, "calendar")},
-            manufacturer=MANUFACTURER,
-            model=MODEL,
-            name="Home Maintenance Center Pro",
-            sw_version=VERSION,
-        )
 
     @property
     def event(self) -> CalendarEvent | None:
@@ -103,10 +84,10 @@ class HomeMaintenanceCalendar(
     async def async_get_events(
         self,
         hass: HomeAssistant,
-        start_date: datetime,
-        end_date: datetime,
+        start_date,
+        end_date,
     ) -> list[CalendarEvent]:
-        """Return all maintenance events."""
+        """Return maintenance events."""
 
         events: list[CalendarEvent] = []
 
@@ -118,12 +99,11 @@ class HomeMaintenanceCalendar(
             ):
                 continue
 
-            start = datetime.combine(
-                item.next_maintenance,
-                time.min,
-            )
-
-            if start_date <= start <= end_date:
+            if (
+                start_date.date()
+                <= item.next_maintenance
+                <= end_date.date()
+            ):
                 events.append(
                     self._create_event(item)
                 )
@@ -135,29 +115,19 @@ class HomeMaintenanceCalendar(
 
     def _create_event(
         self,
-        item,
+        item: MaintenanceItem,
     ) -> CalendarEvent:
-        """Create a calendar event."""
-
-        start = datetime.combine(
-            item.next_maintenance,
-            time.min,
-        )
-
-        end = datetime.combine(
-            item.next_maintenance,
-            time.max,
-        )
+        """Create calendar event."""
 
         description = "\n".join(
             filter(
                 None,
                 [
-                    f"Categoria: {item.category}",
-                    f"Posizione: {item.location}"
+                    f"Category: {item.category}",
+                    f"Priority: {item.priority}",
+                    f"Location: {item.location}"
                     if item.location
                     else "",
-                    f"Priorità: {item.priority}",
                     "",
                     item.notes,
                 ],
@@ -166,7 +136,7 @@ class HomeMaintenanceCalendar(
 
         return CalendarEvent(
             summary=item.name,
-            start=start,
-            end=end,
+            start=item.next_maintenance,
+            end=item.next_maintenance,
             description=description,
         )
