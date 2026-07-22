@@ -24,7 +24,9 @@
           "notification_days": "Giorni di preavviso",
           "notification_hour": "Ora delle notifiche",
           "repeat_notifications": "Ripeti notifiche per manutenzioni scadute",
-          "notify_service": "Dispositivo per notifiche push (servizio notify.*)",
+          "notify_service_1": "Dispositivo notifiche push 1 (servizio notify.*)",
+          "notify_service_2": "Dispositivo notifiche push 2 (servizio notify.*)",
+          "notify_service_3": "Dispositivo notifiche push 3 (servizio notify.*)",
           "local_calendar_entity": "Calendario locale da sincronizzare (opzionale)"
         }
       }
@@ -34,6 +36,9 @@
     "button": {
       "maintenance_done": {
         "name": "Manutenzione eseguita"
+      },
+      "create_item": {
+        "name": "Crea manutenzione"
       }
     },
     "sensor": {
@@ -52,6 +57,19 @@
     "number": {
       "maintenance_interval": {
         "name": "Intervallo manutenzione"
+      },
+      "new_item_interval": {
+        "name": "Nuova manutenzione: intervallo (giorni)"
+      }
+    },
+    "select": {
+      "new_item_category": {
+        "name": "Nuova manutenzione: categoria"
+      }
+    },
+    "text": {
+      "new_item_name": {
+        "name": "Nuova manutenzione: nome"
       }
     },
     "date": {
