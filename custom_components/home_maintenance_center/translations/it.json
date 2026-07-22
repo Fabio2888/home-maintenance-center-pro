@@ -23,7 +23,9 @@
         "data": {
           "notification_days": "Giorni di preavviso",
           "notification_hour": "Ora delle notifiche",
-          "repeat_notifications": "Ripeti notifiche per manutenzioni scadute"
+          "repeat_notifications": "Ripeti notifiche per manutenzioni scadute",
+          "notify_service": "Dispositivo per notifiche push (servizio notify.*)",
+          "local_calendar_entity": "Calendario locale da sincronizzare (opzionale)"
         }
       }
     }
