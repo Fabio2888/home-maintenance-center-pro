@@ -14,9 +14,10 @@ from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.event import async_track_time_change
 
-from .calendar_sync import CalendarSyncManager
+from .calendar_sync import CONF_LOCAL_CALENDAR_ENTITY, CalendarSyncManager
 from .const import DOMAIN, PLATFORMS
 from .coordinator import HomeMaintenanceCoordinator
 from .notify import NotificationManager
@@ -26,6 +27,9 @@ from .services import (
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+LOCAL_CALENDAR_NAME = "Manutenzioni Casa"
+_PROVISION_FLAG = "_local_calendar_provisioned"
 
 
 async def async_setup(
@@ -86,7 +90,19 @@ async def async_setup_entry(
 
     await calendar_sync.async_sync_all()
 
-    # --- Notifiche (persistenti + push su dispositivo scelto) --------
+    # Se non è ancora stato scelto (o creato) nessun calendario
+    # locale, ne creiamo uno automaticamente in background. È
+    # "best effort": in caso di problemi (versione di HA diversa,
+    # integrazione local_calendar non disponibile, ecc.) l'errore
+    # viene solo loggato e l'utente può sempre impostarlo a mano
+    # dalle Opzioni, senza che il resto dell'integrazione ne risenta.
+    entry.async_create_background_task(
+        hass,
+        _async_ensure_local_calendar(hass, entry),
+        "home_maintenance_local_calendar_setup",
+    )
+
+    # --- Notifiche (persistenti + push sui dispositivi scelti) -------
     # Anche il motore di notifica esisteva già nel codice ma non era
     # mai schedulato: nessuna notifica veniva mai inviata.
     notification_manager = NotificationManager(
@@ -119,6 +135,82 @@ async def async_setup_entry(
     )
 
     return True
+
+
+async def _async_ensure_local_calendar(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+) -> None:
+    """Best-effort auto-creation of a local_calendar entry.
+
+    Runs once per config entry (tracked via entry.data), so it never
+    repeats on subsequent restarts even if it failed or the user
+    later removes the calendar it created.
+    """
+
+    if entry.data.get(_PROVISION_FLAG):
+        return
+
+    if entry.options.get(CONF_LOCAL_CALENDAR_ENTITY):
+        # L'utente ha già scelto (o questo processo ha già creato)
+        # un calendario: non serve fare nulla.
+        hass.config_entries.async_update_entry(
+            entry,
+            data={**entry.data, _PROVISION_FLAG: True},
+        )
+        return
+
+    new_options = dict(entry.options)
+
+    try:
+        result = await hass.config_entries.flow.async_init(
+            "local_calendar",
+            context={"source": "user"},
+            data={"calendar_name": LOCAL_CALENDAR_NAME},
+        )
+
+        if result.get("type") == "create_entry":
+            new_entry_id = result["result"].entry_id
+
+            ent_reg = er.async_get(hass)
+
+            for entity in ent_reg.entities.values():
+                if (
+                    entity.config_entry_id == new_entry_id
+                    and entity.domain == "calendar"
+                ):
+                    new_options[CONF_LOCAL_CALENDAR_ENTITY] = (
+                        entity.entity_id
+                    )
+
+                    _LOGGER.info(
+                        "Creato automaticamente il calendario "
+                        "locale %s per Home Maintenance Center Pro",
+                        entity.entity_id,
+                    )
+
+                    break
+        else:
+            _LOGGER.debug(
+                "local_calendar non creato automaticamente "
+                "(%s): puoi impostarne uno dalle Opzioni "
+                "dell'integrazione.",
+                result.get("reason", result.get("type")),
+            )
+
+    except Exception as err:  # noqa: BLE001
+        _LOGGER.warning(
+            "Creazione automatica del calendario locale non "
+            "riuscita (puoi impostarlo manualmente dalle "
+            "Opzioni dell'integrazione): %s",
+            err,
+        )
+
+    hass.config_entries.async_update_entry(
+        entry,
+        data={**entry.data, _PROVISION_FLAG: True},
+        options=new_options,
+    )
 
 
 async def async_unload_entry(

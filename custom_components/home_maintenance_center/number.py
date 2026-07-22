@@ -17,7 +17,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
 from .coordinator import HomeMaintenanceCoordinator
-from .entity import HomeMaintenanceEntity
+from .entity import HomeMaintenanceEntity, HomeMaintenanceSummaryEntity
 from .models.maintenance_item import MaintenanceItem
 
 
@@ -39,6 +39,9 @@ async def async_setup_entry(
                 item,
             )
             for item in coordinator.items
+        ]
+        + [
+            NewItemIntervalNumber(coordinator),
         ]
     )
 
@@ -97,3 +100,53 @@ class MaintenanceIntervalNumber(
         await self.coordinator.async_update_item(
             self.item
         )
+
+
+class NewItemIntervalNumber(
+    HomeMaintenanceSummaryEntity,
+    NumberEntity,
+):
+    """Interval field for the new-item creation form."""
+
+    _attr_translation_key = "new_item_interval"
+    _attr_icon = "mdi:calendar-refresh"
+
+    _attr_native_min_value = 1
+    _attr_native_max_value = 3650
+    _attr_native_step = 1
+
+    _attr_mode = NumberMode.BOX
+
+    _attr_native_unit_of_measurement = UnitOfTime.DAYS
+
+    def __init__(
+        self,
+        coordinator: HomeMaintenanceCoordinator,
+    ) -> None:
+        """Initialize the entity."""
+
+        super().__init__(coordinator)
+
+        self._entity_suffix = "new_item_interval"
+
+    @property
+    def native_value(self) -> float:
+        """Return the currently set interval."""
+
+        return float(
+            self.coordinator.new_item_draft.get(
+                "interval_days", 180
+            )
+        )
+
+    async def async_set_native_value(
+        self,
+        value: float,
+    ) -> None:
+        """Store the interval."""
+
+        self.coordinator.new_item_draft[
+            "interval_days"
+        ] = int(value)
+
+        self.coordinator.async_update_listeners()

@@ -25,7 +25,9 @@
           "notification_days": "Notification days",
           "notification_hour": "Notification hour",
           "repeat_notifications": "Repeat overdue notifications",
-          "notify_service": "Push notification device (notify.* service)",
+          "notify_service_1": "Push notification device 1 (notify.* service)",
+          "notify_service_2": "Push notification device 2 (notify.* service)",
+          "notify_service_3": "Push notification device 3 (notify.* service)",
           "local_calendar_entity": "Local calendar to sync (optional)"
         }
       }
@@ -92,6 +94,9 @@
     "button": {
       "mark_done": {
         "name": "Mark maintenance completed"
+      },
+      "create_item": {
+        "name": "Create maintenance"
       }
     },
     "date": {
@@ -102,6 +107,19 @@
     "number": {
       "interval": {
         "name": "Maintenance interval"
+      },
+      "new_item_interval": {
+        "name": "New maintenance: interval (days)"
+      }
+    },
+    "select": {
+      "new_item_category": {
+        "name": "New maintenance: category"
+      }
+    },
+    "text": {
+      "new_item_name": {
+        "name": "New maintenance: name"
       }
     },
     "switch": {

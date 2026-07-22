@@ -16,7 +16,9 @@ _LOGGER = logging.getLogger(__name__)
 
 DEFAULT_NOTIFICATION_DAYS = (30, 15, 7, 3, 1)
 
-CONF_NOTIFY_SERVICE = "notify_service"
+CONF_NOTIFY_SERVICE_1 = "notify_service_1"
+CONF_NOTIFY_SERVICE_2 = "notify_service_2"
+CONF_NOTIFY_SERVICE_3 = "notify_service_3"
 
 
 class NotificationManager:
@@ -33,13 +35,27 @@ class NotificationManager:
         self.entry = config_entry
 
     @property
-    def _notify_service(self) -> str | None:
-        """Return the configured notify.* service name, if any."""
+    def _notify_services(self) -> list[str]:
+        """Return the configured notify.* service names (up to 3)."""
 
-        return (
-            self.entry.options.get(CONF_NOTIFY_SERVICE)
-            or None
-        )
+        services = [
+            self.entry.options.get(CONF_NOTIFY_SERVICE_1),
+            self.entry.options.get(CONF_NOTIFY_SERVICE_2),
+            self.entry.options.get(CONF_NOTIFY_SERVICE_3),
+        ]
+
+        # Dedup mantenendo l'ordine, scartando i vuoti.
+        seen: set[str] = set()
+        result: list[str] = []
+
+        for service in services:
+            if not service or service in seen:
+                continue
+
+            seen.add(service)
+            result.append(service)
+
+        return result
 
     async def _dispatch(
         self,
@@ -47,7 +63,7 @@ class NotificationManager:
         message: str,
         notification_id: str,
     ) -> None:
-        """Send a persistent notification and, if configured, a push."""
+        """Send a persistent notification and, if configured, pushes."""
 
         persistent_notification.async_create(
             self.hass,
@@ -56,39 +72,36 @@ class NotificationManager:
             notification_id=notification_id,
         )
 
-        service = self._notify_service
+        for service in self._notify_services:
 
-        if not service:
-            return
+            if not self.hass.services.has_service(
+                "notify", service
+            ):
+                _LOGGER.warning(
+                    "Servizio notify.%s non trovato: "
+                    "controlla il dispositivo scelto nelle "
+                    "opzioni dell'integrazione.",
+                    service,
+                )
+                continue
 
-        if not self.hass.services.has_service(
-            "notify", service
-        ):
-            _LOGGER.warning(
-                "Servizio notify.%s non trovato: controlla "
-                "il dispositivo scelto nelle opzioni "
-                "dell'integrazione.",
-                service,
-            )
-            return
-
-        try:
-            await self.hass.services.async_call(
-                "notify",
-                service,
-                {
-                    "title": title,
-                    "message": message,
-                },
-                blocking=True,
-            )
-        except Exception as err:  # noqa: BLE001
-            _LOGGER.warning(
-                "Invio notifica push tramite notify.%s "
-                "fallito: %s",
-                service,
-                err,
-            )
+            try:
+                await self.hass.services.async_call(
+                    "notify",
+                    service,
+                    {
+                        "title": title,
+                        "message": message,
+                    },
+                    blocking=True,
+                )
+            except Exception as err:  # noqa: BLE001
+                _LOGGER.warning(
+                    "Invio notifica push tramite notify.%s "
+                    "fallito: %s",
+                    service,
+                    err,
+                )
 
     async def async_check_notifications(self) -> None:
         """Check all maintenance items."""

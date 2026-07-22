@@ -18,7 +18,9 @@ from homeassistant.helpers.selector import (
 CONF_NOTIFICATION_DAYS = "notification_days"
 CONF_NOTIFICATION_HOUR = "notification_hour"
 CONF_REPEAT_NOTIFICATIONS = "repeat_notifications"
-CONF_NOTIFY_SERVICE = "notify_service"
+CONF_NOTIFY_SERVICE_1 = "notify_service_1"
+CONF_NOTIFY_SERVICE_2 = "notify_service_2"
+CONF_NOTIFY_SERVICE_3 = "notify_service_3"
 CONF_LOCAL_CALENDAR_ENTITY = "local_calendar_entity"
 
 
@@ -43,6 +45,14 @@ class HomeMaintenanceOptionsFlow(OptionsFlow):
                 "notify", {}
             )
             if service not in ("notify", "send_message")
+        )
+
+        notify_selector = SelectSelector(
+            SelectSelectorConfig(
+                options=notify_services,
+                mode=SelectSelectorMode.DROPDOWN,
+                custom_value=True,
+            )
         )
 
         schema = vol.Schema(
@@ -72,18 +82,26 @@ class HomeMaintenanceOptionsFlow(OptionsFlow):
                     ),
                 ): bool,
                 vol.Optional(
-                    CONF_NOTIFY_SERVICE,
+                    CONF_NOTIFY_SERVICE_1,
                     default=self.config_entry.options.get(
-                        CONF_NOTIFY_SERVICE,
+                        CONF_NOTIFY_SERVICE_1,
                         "",
                     ),
-                ): SelectSelector(
-                    SelectSelectorConfig(
-                        options=notify_services,
-                        mode=SelectSelectorMode.DROPDOWN,
-                        custom_value=True,
-                    )
-                ),
+                ): notify_selector,
+                vol.Optional(
+                    CONF_NOTIFY_SERVICE_2,
+                    default=self.config_entry.options.get(
+                        CONF_NOTIFY_SERVICE_2,
+                        "",
+                    ),
+                ): notify_selector,
+                vol.Optional(
+                    CONF_NOTIFY_SERVICE_3,
+                    default=self.config_entry.options.get(
+                        CONF_NOTIFY_SERVICE_3,
+                        "",
+                    ),
+                ): notify_selector,
                 vol.Optional(
                     CONF_LOCAL_CALENDAR_ENTITY,
                     default=self.config_entry.options.get(

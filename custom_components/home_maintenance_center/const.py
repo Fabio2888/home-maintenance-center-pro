@@ -18,7 +18,7 @@ MANUFACTURER = "Fabio2888"
 
 MODEL = "Home Maintenance Center Pro"
 
-VERSION = "2.0.0"
+VERSION = "2.2.0"
 
 #
 # -----------------------------------------------------------------------------
@@ -34,7 +34,31 @@ PLATFORMS: tuple[Platform, ...] = (
     Platform.DATE,
     Platform.SWITCH,
     Platform.SELECT,
+    Platform.TEXT,
     Platform.CALENDAR,
+)
+
+#
+# -----------------------------------------------------------------------------
+# "Add new item" form categories (shared by select.py and the config/options
+# selectors so the list only needs to be maintained in one place)
+# -----------------------------------------------------------------------------
+#
+
+NEW_ITEM_CATEGORIES: tuple[str, ...] = (
+    "HVAC",
+    "Water",
+    "Electrical",
+    "Lighting",
+    "Kitchen",
+    "Bathroom",
+    "Garden",
+    "Security",
+    "Appliances",
+    "Vehicle",
+    "IT",
+    "Cleaning",
+    "Other",
 )
 
 #

@@ -79,6 +79,7 @@ class HomeMaintenanceEntity(
             model=MODEL,
             name=self.item.name,
             sw_version=VERSION,
+            suggested_area="Manutenzione",
             configuration_url=(
                 "https://github.com/Fabio2888/"
                 "home-maintenance-center-pro"

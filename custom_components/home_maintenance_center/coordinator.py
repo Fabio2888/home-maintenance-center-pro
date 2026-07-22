@@ -5,7 +5,7 @@ Coordinator for Home Maintenance Center Pro.
 from __future__ import annotations
 
 import logging
-from datetime import timedelta
+from datetime import date, timedelta
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -13,8 +13,9 @@ from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
     UpdateFailed,
 )
+from homeassistant.util import slugify
 
-from .const import DOMAIN
+from .const import DOMAIN, NEW_ITEM_CATEGORIES
 from .managers.storage_manager import StorageManager
 from .models.maintenance_item import MaintenanceItem
 
@@ -33,6 +34,17 @@ class HomeMaintenanceCoordinator(DataUpdateCoordinator[dict]):
 
         self.config_entry = config_entry
         self.storage = StorageManager(hass)
+
+        # Stato in memoria del form "Aggiungi manutenzione" esposto
+        # tramite le entità native text/select/number + il pulsante
+        # "Crea manutenzione" (vedi text.py, select.py, number.py,
+        # button.py). Non serve persistenza: si azzera ad ogni
+        # riavvio, comportamento voluto per un form vuoto.
+        self.new_item_draft: dict = {
+            "name": "",
+            "category": NEW_ITEM_CATEGORIES[-1],
+            "interval_days": 180,
+        }
 
         super().__init__(
             hass,
@@ -106,6 +118,40 @@ class HomeMaintenanceCoordinator(DataUpdateCoordinator[dict]):
                 return item
 
         return None
+
+    async def async_add_item_by_fields(
+        self,
+        name: str,
+        category: str,
+        interval_days: int,
+    ) -> MaintenanceItem:
+        """Build and add a new maintenance item from raw field values.
+
+        Shared by the ``home_maintenance.add_item`` service and the
+        native "Crea manutenzione" button, so both stay in sync.
+        """
+
+        base_id = slugify(name) or "manutenzione"
+        item_id = base_id
+        counter = 1
+
+        while self.get_item(item_id) is not None:
+            counter += 1
+            item_id = f"{base_id}_{counter}"
+
+        item = MaintenanceItem(
+            item_id=item_id,
+            name=name,
+            category=category,
+            interval_days=interval_days,
+            last_maintenance=date.today(),
+        )
+
+        item.calculate_next_maintenance()
+
+        await self.async_add_item(item)
+
+        return item
 
     @property
     def enabled_count(self) -> int:

@@ -11,7 +11,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
 from .coordinator import HomeMaintenanceCoordinator
-from .entity import HomeMaintenanceEntity
+from .entity import HomeMaintenanceEntity, HomeMaintenanceSummaryEntity
 from .models.maintenance_item import MaintenanceItem
 
 
@@ -33,6 +33,9 @@ async def async_setup_entry(
                 item,
             )
             for item in coordinator.items
+        ]
+        + [
+            CreateItemButton(coordinator),
         ]
     )
 
@@ -68,3 +71,49 @@ class MaintenanceDoneButton(
         await self.coordinator.async_update_item(
             self.item
         )
+
+
+class CreateItemButton(
+    HomeMaintenanceSummaryEntity,
+    ButtonEntity,
+):
+    """Button that creates a new item from the native add-item form."""
+
+    _attr_translation_key = "create_item"
+    _attr_icon = "mdi:plus-circle"
+
+    def __init__(
+        self,
+        coordinator: HomeMaintenanceCoordinator,
+    ) -> None:
+        """Initialize the button."""
+
+        super().__init__(coordinator)
+
+        self._entity_suffix = "create_item"
+
+    async def async_press(self) -> None:
+        """Create the new maintenance item and reset the form."""
+
+        draft = self.coordinator.new_item_draft
+
+        name = (draft.get("name") or "").strip()
+
+        if not name:
+            # Niente da creare senza un nome: non facciamo nulla,
+            # invece di generare un item senza titolo.
+            return
+
+        await self.coordinator.async_add_item_by_fields(
+            name=name,
+            category=draft.get("category", "Other"),
+            interval_days=int(
+                draft.get("interval_days", 180)
+            ),
+        )
+
+        draft["name"] = ""
+        draft["category"] = "Other"
+        draft["interval_days"] = 180
+
+        self.coordinator.async_update_listeners()
