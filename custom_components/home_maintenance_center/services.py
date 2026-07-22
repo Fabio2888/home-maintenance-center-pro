@@ -10,9 +10,11 @@ import voluptuous as vol
 
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers import config_validation as cv
+from homeassistant.util import slugify
 
 from .const import DOMAIN
 from .coordinator import HomeMaintenanceCoordinator
+from .models.maintenance_item import MaintenanceItem
 
 
 SERVICE_MARK_COMPLETED = "mark_completed"
@@ -88,11 +90,27 @@ async def async_register_services(
     async def add_item(call: ServiceCall) -> None:
         """Add new maintenance item."""
 
-        await coordinator.async_add_item(
-            name=call.data["name"],
+        name = call.data["name"]
+
+        base_id = slugify(name) or "manutenzione"
+        item_id = base_id
+        counter = 1
+
+        while coordinator.get_item(item_id) is not None:
+            counter += 1
+            item_id = f"{base_id}_{counter}"
+
+        item = MaintenanceItem(
+            item_id=item_id,
+            name=name,
             category=call.data["category"],
             interval_days=call.data["interval_days"],
+            last_maintenance=date.today(),
         )
+
+        item.calculate_next_maintenance()
+
+        await coordinator.async_add_item(item)
 
     async def remove_item(call: ServiceCall) -> None:
         """Remove maintenance item."""

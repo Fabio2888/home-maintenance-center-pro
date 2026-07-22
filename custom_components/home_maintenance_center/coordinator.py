@@ -95,6 +95,18 @@ class HomeMaintenanceCoordinator(DataUpdateCoordinator[dict]):
 
         return len(self.items)
 
+    def get_item(
+        self,
+        item_id: str,
+    ) -> MaintenanceItem | None:
+        """Return a single maintenance item by id."""
+
+        for item in self.items:
+            if item.item_id == item_id:
+                return item
+
+        return None
+
     @property
     def enabled_count(self) -> int:
         """Return enabled maintenance items."""

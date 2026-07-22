@@ -4,7 +4,7 @@ Calendar platform for Home Maintenance Center Pro.
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 
 from homeassistant.components.calendar import (
     CalendarEntity,
@@ -137,6 +137,6 @@ class HomeMaintenanceCalendar(
         return CalendarEvent(
             summary=item.name,
             start=item.next_maintenance,
-            end=item.next_maintenance,
+            end=item.next_maintenance + timedelta(days=1),
             description=description,
         )

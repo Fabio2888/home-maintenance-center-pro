@@ -24,7 +24,9 @@
         "data": {
           "notification_days": "Notification days",
           "notification_hour": "Notification hour",
-          "repeat_notifications": "Repeat overdue notifications"
+          "repeat_notifications": "Repeat overdue notifications",
+          "notify_service": "Push notification device (notify.* service)",
+          "local_calendar_entity": "Local calendar to sync (optional)"
         }
       }
     }

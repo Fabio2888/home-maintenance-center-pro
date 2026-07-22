@@ -4,6 +4,7 @@ Notification engine for Home Maintenance Center Pro.
 
 from __future__ import annotations
 
+import logging
 from datetime import date
 
 from homeassistant.core import HomeAssistant
@@ -11,8 +12,11 @@ from homeassistant.components import persistent_notification
 
 from .const import DOMAIN
 
+_LOGGER = logging.getLogger(__name__)
 
 DEFAULT_NOTIFICATION_DAYS = (30, 15, 7, 3, 1)
+
+CONF_NOTIFY_SERVICE = "notify_service"
 
 
 class NotificationManager:
@@ -27,6 +31,64 @@ class NotificationManager:
         self.hass = hass
         self.coordinator = coordinator
         self.entry = config_entry
+
+    @property
+    def _notify_service(self) -> str | None:
+        """Return the configured notify.* service name, if any."""
+
+        return (
+            self.entry.options.get(CONF_NOTIFY_SERVICE)
+            or None
+        )
+
+    async def _dispatch(
+        self,
+        title: str,
+        message: str,
+        notification_id: str,
+    ) -> None:
+        """Send a persistent notification and, if configured, a push."""
+
+        persistent_notification.async_create(
+            self.hass,
+            message=message,
+            title=title,
+            notification_id=notification_id,
+        )
+
+        service = self._notify_service
+
+        if not service:
+            return
+
+        if not self.hass.services.has_service(
+            "notify", service
+        ):
+            _LOGGER.warning(
+                "Servizio notify.%s non trovato: controlla "
+                "il dispositivo scelto nelle opzioni "
+                "dell'integrazione.",
+                service,
+            )
+            return
+
+        try:
+            await self.hass.services.async_call(
+                "notify",
+                service,
+                {
+                    "title": title,
+                    "message": message,
+                },
+                blocking=True,
+            )
+        except Exception as err:  # noqa: BLE001
+            _LOGGER.warning(
+                "Invio notifica push tramite notify.%s "
+                "fallito: %s",
+                service,
+                err,
+            )
 
     async def async_check_notifications(self) -> None:
         """Check all maintenance items."""
@@ -79,19 +141,18 @@ class NotificationManager:
     ) -> None:
         """Notify upcoming maintenance."""
 
-        title = f"Maintenance: {item.name}"
+        title = f"Manutenzione: {item.name}"
 
         message = (
-            f"The maintenance '{item.name}' "
-            f"is due in {remaining} day(s).\n\n"
-            f"Category: {item.category}\n"
-            f"Next maintenance: {item.next_maintenance}"
+            f"La manutenzione '{item.name}' "
+            f"scade tra {remaining} giorno/i.\n\n"
+            f"Categoria: {item.category}\n"
+            f"Prossima manutenzione: {item.next_maintenance}"
         )
 
-        persistent_notification.async_create(
-            self.hass,
-            message=message,
-            title=title,
+        await self._dispatch(
+            title,
+            message,
             notification_id=f"{DOMAIN}_{item.item_id}",
         )
 
@@ -102,17 +163,16 @@ class NotificationManager:
     ) -> None:
         """Notify overdue maintenance."""
 
-        title = f"Maintenance overdue: {item.name}"
+        title = f"Manutenzione scaduta: {item.name}"
 
         message = (
-            f"The maintenance '{item.name}' "
-            f"is overdue by {overdue_days} day(s).\n\n"
-            f"Scheduled date: {item.next_maintenance}"
+            f"La manutenzione '{item.name}' "
+            f"è scaduta da {overdue_days} giorno/i.\n\n"
+            f"Data prevista: {item.next_maintenance}"
         )
 
-        persistent_notification.async_create(
-            self.hass,
-            message=message,
-            title=title,
+        await self._dispatch(
+            title,
+            message,
             notification_id=f"{DOMAIN}_{item.item_id}_overdue",
         )
