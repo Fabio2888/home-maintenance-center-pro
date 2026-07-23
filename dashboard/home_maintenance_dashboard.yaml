@@ -1,1 +1,192 @@
+# Dashboard di esempio per Home Maintenance Center Pro
+#
+# Incolla questo contenuto nell'editor YAML della tua dashboard
+# Lovelace (Impostazioni > Dashboard > modifica > menu (...) >
+# Modifica in YAML).
+#
+# Alcuni entity_id (sensor.home_maintenance_center_pro_*,
+# text/select/number/button.home_maintenance_center_pro,
+# calendar.manutenzioni_casa) potrebbero variare leggermente sul tuo
+# sistema: verificali in Impostazioni > Dispositivi e servizi > Entità
+# e correggili se necessario.
+#
+# La sezione "Segna manutenzioni effettuate" richiede la card
+# custom:auto-entities (HACS > Frontend > "auto-entities" di
+# thomasloven) per restare automatica quando aggiungi nuove
+# manutenzioni.
 
+views:
+  - title: Panoramica
+    path: home-maintenance
+    icon: mdi:home-heart
+    type: sections
+    badges:
+      - type: entity
+        entity: sensor.home_maintenance_center_pro_5
+        name: Scadute
+        color: red
+      - type: entity
+        entity: sensor.home_maintenance_center_pro_4
+        name: In scadenza
+        color: amber
+      - type: entity
+        entity: binary_sensor.home_maintenance_center_pro_2
+        name: Attenzione
+    sections:
+      - type: grid
+        cards:
+          - type: conditional
+            conditions:
+              - condition: numeric_state
+                entity: sensor.home_maintenance_center_pro_5
+                above: 0
+            card:
+              type: markdown
+              content: |
+                ## ⚠️ Hai manutenzioni scadute — controlla il riepilogo qui sotto!
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: "🏠 Home Maintenance Center Pro"
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: tile
+                entity: sensor.home_maintenance_center_pro
+                name: Totale
+                icon: mdi:home-lightning-bolt
+              - type: tile
+                entity: sensor.home_maintenance_center_pro_6
+                name: Regolari
+                color: green
+                icon: mdi:check-circle
+              - type: tile
+                entity: sensor.home_maintenance_center_pro_4
+                name: In scadenza
+                color: amber
+                icon: mdi:calendar-alert
+              - type: tile
+                entity: sensor.home_maintenance_center_pro_5
+                name: Scadute
+                color: red
+                icon: mdi:alert-circle
+              - type: tile
+                entity: binary_sensor.home_maintenance_center_pro
+                name: Casa in ordine
+                color: green
+              - type: tile
+                entity: binary_sensor.home_maintenance_center_pro_2
+                name: Attenzione
+                color: red
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: "📋 Riepilogo manutenzioni"
+          - type: markdown
+            content: |
+              {%- set ns = namespace(scadute=[], in_scadenza=[], ok=[]) -%}
+              {%- for s in states.sensor -%}
+                {%- if 'days_remaining' in s.attributes -%}
+                  {%- set d = s.attributes.days_remaining -%}
+                  {%- set dev_id = device_id(s.entity_id) -%}
+                  {%- set dev_name = device_attr(dev_id, 'name') if dev_id else s.name -%}
+                  {%- if d is not none -%}
+                    {%- if d < 0 -%}
+                      {%- set ns.scadute = ns.scadute + [{'name': dev_name, 'days': d}] -%}
+                    {%- elif d <= 30 -%}
+                      {%- set ns.in_scadenza = ns.in_scadenza + [{'name': dev_name, 'days': d}] -%}
+                    {%- else -%}
+                      {%- set ns.ok = ns.ok + [{'name': dev_name, 'days': d}] -%}
+                    {%- endif -%}
+                  {%- endif -%}
+                {%- endif -%}
+              {%- endfor -%}
+              ## 🔴 Scadute ({{ ns.scadute | length }})
+              {% for it in ns.scadute | sort(attribute='days') %}
+              - <span style="color:#e53935"><b>{{ it.name }}</b> — scaduta da {{ -it.days }} giorni</span>
+              {% else %}
+              Nessuna 🎉
+              {% endfor %}
+
+              ## 🟠 In scadenza entro 30 giorni ({{ ns.in_scadenza | length }})
+              {% for it in ns.in_scadenza | sort(attribute='days') %}
+              - **{{ it.name }}** — tra {{ it.days }} giorni
+              {% else %}
+              Nessuna
+              {% endfor %}
+
+              ## 🟢 Regolari ({{ ns.ok | length }})
+              {% for it in ns.ok | sort(attribute='days') %}
+              - {{ it.name }} — tra {{ it.days }} giorni
+              {% else %}
+              —
+              {% endfor %}
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: "📅 Calendario"
+          - type: calendar
+            entities:
+              - calendar.manutenzioni_casa
+            grid_options:
+              columns: full
+
+  - title: Gestione
+    path: home-maintenance-gestione
+    icon: mdi:cog-outline
+    type: sections
+    badges:
+      - type: entity
+        entity: sensor.home_maintenance_center_pro_5
+        name: Scadute
+        color: red
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: "➕ Aggiungi nuova manutenzione"
+          - type: entities
+            entities:
+              - entity: text.home_maintenance_center_pro
+                name: Nome
+              - entity: select.home_maintenance_center_pro
+                name: Categoria
+              - entity: number.home_maintenance_center_pro
+                name: Intervallo (giorni)
+          - type: button
+            entity: button.home_maintenance_center_pro
+            name: "✓ Crea manutenzione"
+            icon: mdi:plus-circle
+            tap_action:
+              action: perform-action
+              perform_action: button.press
+              target:
+                entity_id: button.home_maintenance_center_pro
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: "✓ Segna manutenzioni effettuate (automatico)"
+          - type: custom:auto-entities
+            card:
+              type: grid
+              columns: 2
+              square: false
+            card_param: cards
+            filter:
+              include:
+                - domain: button
+                  attributes:
+                    days_remaining: "<= 99999"
+                  options:
+                    type: tile
+                    icon: mdi:check-bold
+                    tap_action:
+                      action: perform-action
+                      perform_action: button.press
+            sort:
+              method: name
