@@ -21,6 +21,7 @@ from .calendar_sync import CONF_LOCAL_CALENDAR_ENTITY, CalendarSyncManager
 from .const import DOMAIN, PLATFORMS
 from .coordinator import HomeMaintenanceCoordinator
 from .notify import NotificationManager
+from .repairs import async_check_repairs
 from .services import (
     async_register_services,
     async_unregister_services,
@@ -83,12 +84,14 @@ async def async_setup_entry(
 
     def _handle_coordinator_update() -> None:
         hass.async_create_task(calendar_sync.async_sync_all())
+        hass.async_create_task(async_check_repairs(hass, entry))
 
     entry.async_on_unload(
         coordinator.async_add_listener(_handle_coordinator_update)
     )
 
     await calendar_sync.async_sync_all()
+    await async_check_repairs(hass, entry)
 
     # Se non è ancora stato scelto (o creato) nessun calendario
     # locale, ne creiamo uno automaticamente in background. È

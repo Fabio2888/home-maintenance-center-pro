@@ -18,7 +18,7 @@ MANUFACTURER = "Fabio2888"
 
 MODEL = "Home Maintenance Center Pro"
 
-VERSION = "2.2.0"
+VERSION = "2.3.0"
 
 #
 # -----------------------------------------------------------------------------
