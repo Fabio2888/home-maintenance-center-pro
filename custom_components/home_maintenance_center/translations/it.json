@@ -1,4 +1,18 @@
 {
+  "issues": {
+    "duplicate_item_ids": {
+      "title": "ID manutenzione duplicati",
+      "description": "Più manutenzioni condividono lo stesso identificativo univoco."
+    },
+    "invalid_interval": {
+      "title": "Intervallo manutenzione non valido",
+      "description": "Una o più manutenzioni hanno un intervallo minore o uguale a zero."
+    },
+    "missing_next_date": {
+      "title": "Data prossima manutenzione mancante",
+      "description": "Una o più manutenzioni attive non hanno una data di prossima manutenzione calcolata."
+    }
+  },
   "config": {
     "step": {
       "user": {

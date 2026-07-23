@@ -1,5 +1,19 @@
 {
   "title": "Home Maintenance Center Pro",
+  "issues": {
+    "duplicate_item_ids": {
+      "title": "Duplicate maintenance IDs",
+      "description": "Multiple maintenance items share the same unique identifier."
+    },
+    "invalid_interval": {
+      "title": "Invalid maintenance interval",
+      "description": "One or more maintenance items have an interval less than or equal to zero."
+    },
+    "missing_next_date": {
+      "title": "Missing next maintenance date",
+      "description": "One or more enabled maintenance items do not have a calculated next maintenance date."
+    }
+  },
   "config": {
     "step": {
       "user": {
