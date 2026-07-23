@@ -2,6 +2,40 @@
 
 
 
+\## v2.3.0 — Consolidamento e pulizia
+
+
+
+\- Rimosso codice morto mai collegato (maintenance\_manager.py,
+
+  history.py, statistics.py, validators.py, repairs\_flow.py): non
+
+  venivano mai importati da nessun'altra parte del progetto e non
+
+  avevano alcun effetto reale, solo confusione per chi legge il
+
+  codice.
+
+\- Collegato `repairs.py` (già scritto ma mai chiamato): ora
+
+  Home Assistant mostra avvisi reali in Impostazioni > Sistema >
+
+  Repairs per intervalli non validi, ID duplicati o date mancanti.
+
+\- Aggiunte traduzioni italiane/inglesi mancanti per gli avvisi
+
+  Repairs.
+
+\- Aggiunta cartella `dashboard/` con un esempio di dashboard
+
+  Lovelace completo e pronto all'uso.
+
+\- README riscritto da zero: installazione, opzioni, servizi,
+
+  struttura del progetto, note tecniche e limiti noti.
+
+
+
 \## v2.2.0
 
 
