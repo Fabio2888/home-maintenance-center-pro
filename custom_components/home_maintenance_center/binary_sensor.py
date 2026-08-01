@@ -14,6 +14,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
 from .coordinator import HomeMaintenanceCoordinator
+from .dynamic_entities import async_setup_dynamic_item_entities
 from .entity import (
     HomeMaintenanceEntity,
     HomeMaintenanceSummaryEntity,
@@ -32,34 +33,24 @@ async def async_setup_entry(
         DOMAIN
     ][entry.entry_id]
 
-    entities: list[BinarySensorEntity] = []
-
-    for item in coordinator.items:
-        entities.extend(
-            (
-                MaintenanceDueBinarySensor(
-                    coordinator,
-                    item,
-                ),
-                MaintenanceOverdueBinarySensor(
-                    coordinator,
-                    item,
-                ),
-            )
-        )
-
-    entities.extend(
-        (
-            AttentionRequiredBinarySensor(
-                coordinator,
-            ),
-            HealthyBinarySensor(
-                coordinator,
-            ),
-        )
+    async_add_entities(
+        [
+            AttentionRequiredBinarySensor(coordinator),
+            HealthyBinarySensor(coordinator),
+        ]
     )
 
-    async_add_entities(entities)
+    def _entities_for_item(item: MaintenanceItem):
+        return [
+            MaintenanceDueBinarySensor(coordinator, item),
+            MaintenanceOverdueBinarySensor(coordinator, item),
+        ]
+
+    async_setup_dynamic_item_entities(
+        coordinator,
+        async_add_entities,
+        _entities_for_item,
+    )
 
 
 class MaintenanceDueBinarySensor(

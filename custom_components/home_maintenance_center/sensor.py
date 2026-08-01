@@ -15,6 +15,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
 from .coordinator import HomeMaintenanceCoordinator
+from .dynamic_entities import async_setup_dynamic_item_entities
 from .entity import (
     HomeMaintenanceEntity,
     HomeMaintenanceSummaryEntity,
@@ -33,26 +34,12 @@ async def async_setup_entry(
         DOMAIN
     ][entry.entry_id]
 
-    entities: list[SensorEntity] = []
-
-    #
-    # One sensor for every maintenance item
-    #
-
-    for item in coordinator.items:
-        entities.append(
-            DaysRemainingSensor(
-                coordinator,
-                item,
-            )
-        )
-
     #
     # Global summary sensors
     #
 
-    entities.extend(
-        (
+    async_add_entities(
+        [
             TotalSensor(coordinator),
             EnabledSensor(coordinator),
             DisabledSensor(coordinator),
@@ -61,10 +48,19 @@ async def async_setup_entry(
             OkSensor(coordinator),
             NextDueSensor(coordinator),
             NextDueDaysSensor(coordinator),
-        )
+        ]
     )
 
-    async_add_entities(entities)
+    #
+    # One sensor per maintenance item, including any item created
+    # later on (no restart required).
+    #
+
+    async_setup_dynamic_item_entities(
+        coordinator,
+        async_add_entities,
+        lambda item: [DaysRemainingSensor(coordinator, item)],
+    )
 
 
 #

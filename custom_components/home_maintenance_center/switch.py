@@ -13,6 +13,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
 from .coordinator import HomeMaintenanceCoordinator
+from .dynamic_entities import async_setup_dynamic_item_entities
 from .entity import HomeMaintenanceEntity
 from .models.maintenance_item import MaintenanceItem
 
@@ -28,14 +29,10 @@ async def async_setup_entry(
         DOMAIN
     ][entry.entry_id]
 
-    async_add_entities(
-        [
-            MaintenanceEnabledSwitch(
-                coordinator,
-                item,
-            )
-            for item in coordinator.items
-        ]
+    async_setup_dynamic_item_entities(
+        coordinator,
+        async_add_entities,
+        lambda item: [MaintenanceEnabledSwitch(coordinator, item)],
     )
 
 

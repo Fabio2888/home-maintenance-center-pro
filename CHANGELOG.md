@@ -2,6 +2,36 @@
 
 
 
+\## v2.4.0
+
+
+
+\- Fix importante: le manutenzioni create dopo l'avvio di Home
+
+  Assistant (tramite il pulsante "Crea manutenzione" o il servizio
+
+  `home_maintenance.add_item`) non ottenevano mai le proprie entità
+
+  (sensore giorni rimanenti, pulsante "segna come fatta", binary
+
+  sensor scadenza/scaduta, data ultima manutenzione, intervallo,
+
+  switch abilita/disabilita) fino al successivo riavvio completo di
+
+  Home Assistant. Ogni piattaforma per-elemento creava le entità
+
+  solo una volta, all'avvio.
+
+\- Aggiunto un helper condiviso (`dynamic_entities.py`) che ogni
+
+  piattaforma usa per registrare automaticamente le entità dei nuovi
+
+  elementi non appena vengono creati, in tempo reale, senza
+
+  richiedere alcun riavvio.
+
+
+
 \## v2.3.0 — Consolidamento e pulizia
 
 
